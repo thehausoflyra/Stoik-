@@ -1,0 +1,245 @@
+/*
+  Stoik Code Widget
+  Dark, tactical, performance-brand aesthetic.
+  ─────────────────────────────────────────────
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Variables ───────────────────────────────────────── */
+.sc-widget {
+  --bg:             #09090b;
+  --surface:        #111115;
+  --surface-hover:  #18181e;
+  --border:         #1f1f28;
+  --accent:         #dc2626;
+  --accent-dim:     rgba(220, 38, 38, 0.08);
+  --text:           #e2e2e8;
+  --text-muted:     #5a5a6e;
+  --font-display:   'Bebas Neue', 'Impact', 'Arial Narrow', sans-serif;
+  --font-body:      'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:      'JetBrains Mono', 'Courier New', monospace;
+
+  font-family:      var(--font-body);
+  background:       var(--bg);
+  color:            var(--text);
+  border:           1px solid var(--border);
+  clip-path:        polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 0 100%);
+  filter:           drop-shadow(0 0 24px rgba(220, 38, 38, 0.08));
+  width:            100%;
+  max-width:        480px;
+  position:         relative;
+  /* subtle technical grid */
+  background-image:
+    linear-gradient(rgba(220, 38, 38, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(220, 38, 38, 0.03) 1px, transparent 1px);
+  background-size:  32px 32px;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.sc-widget__header {
+  padding:        22px 24px 20px;
+  border-bottom:  1px solid var(--border);
+  background:     linear-gradient(180deg, rgba(220, 38, 38, 0.06) 0%, transparent 100%);
+}
+
+.sc-widget__badge {
+  font-family:    var(--font-mono);
+  font-size:      10px;
+  font-weight:    500;
+  letter-spacing: 0.18em;
+  color:          var(--accent);
+  text-transform: uppercase;
+  display:        flex;
+  align-items:    center;
+  gap:            7px;
+  margin-bottom:  10px;
+}
+
+.sc-widget__badge-dot {
+  display:          inline-block;
+  width:            6px;
+  height:           6px;
+  background:       var(--accent);
+  border-radius:    50%;
+  flex-shrink:      0;
+  animation:        sc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sc-pulse {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+  50%       { opacity: 0.4; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0); }
+}
+
+.sc-widget__title {
+  font-family:    var(--font-display);
+  font-size:      clamp(28px, 7vw, 38px);
+  letter-spacing: 0.07em;
+  line-height:    1;
+  color:          var(--text);
+  margin:         0 0 7px;
+}
+
+.sc-widget__title span {
+  color: var(--accent);
+}
+
+.sc-widget__sub {
+  font-family:    var(--font-mono);
+  font-size:      11px;
+  color:          var(--text-muted);
+  margin:         0;
+  letter-spacing: 0.06em;
+}
+
+/* ── List ────────────────────────────────────────────── */
+.sc-widget__list {
+  /* container only */
+}
+
+/* ── Item ────────────────────────────────────────────── */
+.sc-item {
+  border-bottom:  1px solid var(--border);
+  position:       relative;
+}
+
+.sc-item:last-child {
+  border-bottom: none;
+}
+
+/* animated left-bar accent */
+.sc-item::before {
+  content:          '';
+  position:         absolute;
+  left:             0;
+  top:              0;
+  bottom:           0;
+  width:            2px;
+  background:       var(--accent);
+  transform:        scaleY(0);
+  transform-origin: bottom;
+  transition:       transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index:          1;
+}
+
+.sc-item--open::before {
+  transform: scaleY(1);
+}
+
+.sc-item--open {
+  background: var(--surface);
+}
+
+/* trigger button */
+.sc-item__trigger {
+  display:        flex;
+  align-items:    center;
+  gap:            14px;
+  width:          100%;
+  padding:        14px 20px 14px 20px;
+  background:     transparent;
+  border:         none;
+  cursor:         pointer;
+  color:          var(--text);
+  text-align:     left;
+  min-height:     54px;
+  transition:     background 0.15s ease;
+}
+
+.sc-item__trigger:hover {
+  background: var(--surface-hover);
+}
+
+.sc-item__trigger:focus-visible {
+  outline:        2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sc-item__num {
+  font-family:    var(--font-mono);
+  font-size:      11px;
+  font-weight:    500;
+  color:          var(--accent);
+  letter-spacing: 0.1em;
+  flex-shrink:    0;
+  width:          26px;
+  opacity:        0.8;
+}
+
+.sc-item__name {
+  font-family:    var(--font-display);
+  font-size:      clamp(17px, 4vw, 21px);
+  letter-spacing: 0.05em;
+  line-height:    1.1;
+  flex:           1;
+}
+
+.sc-item--open .sc-item__name {
+  color: var(--accent);
+}
+
+.sc-item__icon {
+  font-family:    var(--font-mono);
+  font-size:      20px;
+  font-weight:    400;
+  color:          var(--text-muted);
+  flex-shrink:    0;
+  width:          22px;
+  text-align:     center;
+  line-height:    1;
+  transition:     color 0.2s, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select:    none;
+}
+
+.sc-item--open .sc-item__icon {
+  color:     var(--accent);
+  transform: rotate(45deg);
+}
+
+/* body collapse — grid trick for smooth height */
+.sc-item__body {
+  display:              grid;
+  grid-template-rows:   0fr;
+  transition:           grid-template-rows 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sc-item__body--open {
+  grid-template-rows: 1fr;
+}
+
+.sc-item__body-inner {
+  overflow: hidden;
+}
+
+.sc-item__text {
+  font-size:   13.5px;
+  line-height: 1.72;
+  color:       var(--text-muted);
+  padding:     2px 24px 18px 60px;
+  margin:      0;
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+.sc-widget__footer {
+  display:        flex;
+  align-items:    center;
+  justify-content: space-between;
+  padding:        11px 24px;
+  border-top:     1px solid var(--border);
+  background:     var(--surface);
+}
+
+.sc-widget__footer-text {
+  font-family:    var(--font-mono);
+  font-size:      10px;
+  letter-spacing: 0.16em;
+  color:          var(--text-muted);
+  text-transform: uppercase;
+}
+
+.sc-widget__footer-mark {
+  font-family:    var(--font-display);
+  font-size:      15px;
+  letter-spacing: 0.12em;
+  color:          var(--text-muted);
+}
