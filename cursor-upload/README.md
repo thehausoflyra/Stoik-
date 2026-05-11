@@ -17,3 +17,10 @@ WordPress upload path:
 5. Click **Activate Plugin**.
 
 After activation, open **SEO Blog Builder** in the WordPress admin sidebar.
+
+Security defaults:
+
+- The builder dashboard is admin-only.
+- Publishing uses WordPress permission checks.
+- Images must be valid WordPress media-library image attachments.
+- The plugin does not make external API requests.

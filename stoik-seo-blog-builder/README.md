@@ -10,6 +10,7 @@ Stoik SEO Blog Builder is a standalone WordPress plugin for creating SEO-ready b
 - Plain-text formatting into paragraphs, H2/H3 headings, and lists.
 - SEO title, meta description, focus keyword, reading-time, Open Graph, Twitter card, and JSON-LD article schema support.
 - Compatibility meta fields for Yoast SEO and Rank Math.
+- Admin-only access, nonce-protected publishing, image attachment validation, and creator audit metadata.
 - A custom editorial blog homepage shortcode:
 
 ```text
@@ -83,3 +84,13 @@ For best SEO results:
 - Add descriptive alt text to every image.
 - Choose one main category and a few relevant tags.
 - Link from each post to related service pages or older articles when useful.
+
+## Security notes
+
+- The dashboard is restricted to WordPress administrators by requiring the `manage_options` capability.
+- Form submissions are protected with a WordPress nonce.
+- Publishing still respects the `publish_posts` capability; users without that capability are forced to pending review.
+- Selected media IDs are validated as real image attachments that the current user can edit.
+- Category and tag assignment respects WordPress taxonomy capabilities.
+- Created posts store audit metadata for the creator user ID and creation timestamp.
+- The plugin does not create custom database tables or make external API requests.

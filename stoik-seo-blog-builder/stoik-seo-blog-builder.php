@@ -17,6 +17,7 @@ final class Stoik_SEO_Blog_Builder
 {
     const VERSION = '0.1.0';
     const SLUG = 'stoik-seo-blog-builder';
+    const ADMIN_CAPABILITY = 'manage_options';
 
     public function __construct()
     {
@@ -35,7 +36,7 @@ final class Stoik_SEO_Blog_Builder
         add_menu_page(
             __('SEO Blog Builder', 'stoik-seo-blog-builder'),
             __('SEO Blog Builder', 'stoik-seo-blog-builder'),
-            'edit_posts',
+            self::ADMIN_CAPABILITY,
             self::SLUG,
             array($this, 'render_admin_page'),
             'dashicons-welcome-write-blog',
@@ -129,7 +130,7 @@ final class Stoik_SEO_Blog_Builder
 
     public function render_admin_page()
     {
-        if (!current_user_can('edit_posts')) {
+        if (!current_user_can(self::ADMIN_CAPABILITY)) {
             wp_die(esc_html__('You do not have permission to create posts.', 'stoik-seo-blog-builder'));
         }
 
@@ -297,7 +298,9 @@ final class Stoik_SEO_Blog_Builder
                                 <span><?php esc_html_e('Status', 'stoik-seo-blog-builder'); ?></span>
                                 <select name="sbb_status">
                                     <option value="draft"><?php esc_html_e('Save as draft', 'stoik-seo-blog-builder'); ?></option>
-                                    <option value="publish"><?php esc_html_e('Publish immediately', 'stoik-seo-blog-builder'); ?></option>
+                                    <?php if (current_user_can('publish_posts')) : ?>
+                                        <option value="publish"><?php esc_html_e('Publish immediately', 'stoik-seo-blog-builder'); ?></option>
+                                    <?php endif; ?>
                                     <option value="pending"><?php esc_html_e('Pending review', 'stoik-seo-blog-builder'); ?></option>
                                 </select>
                             </label>
@@ -325,7 +328,7 @@ final class Stoik_SEO_Blog_Builder
 
     public function handle_create_post()
     {
-        if (!current_user_can('edit_posts')) {
+        if (!current_user_can(self::ADMIN_CAPABILITY)) {
             wp_die(esc_html__('You do not have permission to create posts.', 'stoik-seo-blog-builder'));
         }
 
@@ -341,17 +344,26 @@ final class Stoik_SEO_Blog_Builder
         $excerpt = isset($_POST['sbb_excerpt']) ? sanitize_textarea_field(wp_unslash($_POST['sbb_excerpt'])) : '';
         $status = isset($_POST['sbb_status']) ? sanitize_key(wp_unslash($_POST['sbb_status'])) : 'draft';
         $status = in_array($status, array('draft', 'publish', 'pending'), true) ? $status : 'draft';
+        if ('publish' === $status && !current_user_can('publish_posts')) {
+            $status = 'pending';
+        }
         $seo_title = isset($_POST['sbb_seo_title']) ? sanitize_text_field(wp_unslash($_POST['sbb_seo_title'])) : '';
         $meta_description = isset($_POST['sbb_meta_description']) ? sanitize_textarea_field(wp_unslash($_POST['sbb_meta_description'])) : '';
         $focus_keyword = isset($_POST['sbb_focus_keyword']) ? sanitize_text_field(wp_unslash($_POST['sbb_focus_keyword'])) : '';
         $image_alt = isset($_POST['sbb_image_alt']) ? sanitize_text_field(wp_unslash($_POST['sbb_image_alt'])) : '';
-        $featured_image_id = isset($_POST['sbb_featured_image_id']) ? absint($_POST['sbb_featured_image_id']) : 0;
-        $image_ids = $this->parse_id_list(isset($_POST['sbb_image_ids']) ? wp_unslash($_POST['sbb_image_ids']) : '');
+        $submitted_featured_image_id = isset($_POST['sbb_featured_image_id']) ? absint($_POST['sbb_featured_image_id']) : 0;
+        $submitted_image_ids = $this->parse_id_list(isset($_POST['sbb_image_ids']) ? wp_unslash($_POST['sbb_image_ids']) : '');
+        $featured_image_id = $this->validate_image_id($submitted_featured_image_id);
+        $image_ids = $this->validate_image_ids($submitted_image_ids);
         $category_ids = $this->parse_category_ids(isset($_POST['sbb_categories']) ? (array) $_POST['sbb_categories'] : array());
-        $tags = isset($_POST['sbb_tags']) ? sanitize_text_field(wp_unslash($_POST['sbb_tags'])) : '';
+        $tags = $this->sanitize_tags_input(isset($_POST['sbb_tags']) ? wp_unslash($_POST['sbb_tags']) : '');
 
         if ('' === $title || '' === trim(wp_strip_all_tags($raw_body))) {
             $this->redirect_with_error('missing_content');
+        }
+
+        if (($submitted_featured_image_id && !$featured_image_id) || count($submitted_image_ids) !== count($image_ids)) {
+            $this->redirect_with_error('invalid_image');
         }
 
         $all_image_ids = $image_ids;
@@ -378,6 +390,7 @@ final class Stoik_SEO_Blog_Builder
                 'post_excerpt' => $excerpt,
                 'post_status' => $status,
                 'post_type' => 'post',
+                'post_author' => get_current_user_id(),
                 'post_category' => $category_ids,
                 'tags_input' => $tags,
             ),
@@ -404,6 +417,8 @@ final class Stoik_SEO_Blog_Builder
         }
 
         update_post_meta($post_id, '_sbb_created', '1');
+        update_post_meta($post_id, '_sbb_created_by', get_current_user_id());
+        update_post_meta($post_id, '_sbb_created_at', gmdate('c'));
         update_post_meta($post_id, '_sbb_reading_time', $reading_time);
         update_post_meta($post_id, '_sbb_focus_keyword', $focus_keyword);
 
@@ -777,14 +792,71 @@ final class Stoik_SEO_Blog_Builder
 
         $ids = explode(',', sanitize_text_field($ids));
 
-        return array_values(array_filter(array_map('absint', $ids)));
+        return array_values(array_unique(array_filter(array_map('absint', $ids))));
+    }
+
+    private function validate_image_ids($image_ids)
+    {
+        $valid_ids = array();
+
+        foreach ($image_ids as $image_id) {
+            $valid_id = $this->validate_image_id($image_id);
+            if ($valid_id) {
+                $valid_ids[] = $valid_id;
+            }
+        }
+
+        return array_values(array_unique($valid_ids));
+    }
+
+    private function validate_image_id($image_id)
+    {
+        $image_id = absint($image_id);
+
+        if (!$image_id) {
+            return 0;
+        }
+
+        if ('attachment' !== get_post_type($image_id)) {
+            return 0;
+        }
+
+        $mime_type = get_post_mime_type($image_id);
+        if (!$mime_type || 0 !== strpos($mime_type, 'image/')) {
+            return 0;
+        }
+
+        if (!current_user_can('edit_post', $image_id)) {
+            return 0;
+        }
+
+        return $image_id;
     }
 
     private function parse_category_ids($categories)
     {
         $categories = array_values(array_filter(array_map('absint', $categories)));
+        $valid_categories = array();
 
-        return $categories ? $categories : array((int) get_option('default_category'));
+        if (current_user_can('assign_categories')) {
+            foreach ($categories as $category_id) {
+                $term = get_term($category_id, 'category');
+                if ($term && !is_wp_error($term)) {
+                    $valid_categories[] = $category_id;
+                }
+            }
+        }
+
+        return $valid_categories ? $valid_categories : array((int) get_option('default_category'));
+    }
+
+    private function sanitize_tags_input($tags)
+    {
+        if (!current_user_can('assign_post_tags')) {
+            return '';
+        }
+
+        return sanitize_text_field($tags);
     }
 
     private function calculate_reading_time($content)
@@ -888,6 +960,7 @@ final class Stoik_SEO_Blog_Builder
         $messages = array(
             'nonce' => __('Security check failed. Please try again.', 'stoik-seo-blog-builder'),
             'missing_content' => __('Please add both a post title and body copy.', 'stoik-seo-blog-builder'),
+            'invalid_image' => __('One or more selected files are not valid image attachments you can use. Please reselect images from the media library.', 'stoik-seo-blog-builder'),
             'insert_failed' => __('WordPress could not create the post. Please try again.', 'stoik-seo-blog-builder'),
         );
 
