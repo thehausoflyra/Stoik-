@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What Should We Make?</title>
+  <link rel="stylesheet" href="./WhatShouldWeMake.css" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      padding: 32px 16px 58px;
+      background:
+        radial-gradient(circle at top left, rgba(255, 87, 210, 0.22), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(0, 168, 255, 0.28), transparent 32%),
+        #edf8ff;
+    }
+  </style>
+</head>
+<body>
+  <section class="wsm-machine" aria-labelledby="wsm-title">
+    <div class="wsm-machine__topper">
+      <div class="wsm-burst" aria-hidden="true">
+        <span class="wsm-burst__hand">HI</span>
+      </div>
+
+      <button class="wsm-lever" type="button" data-generate>
+        <span class="wsm-lever__arm" aria-hidden="true"></span>
+        <span class="wsm-lever__copy">Press here for your idea</span>
+      </button>
+    </div>
+
+    <div class="wsm-machine__marquee">
+      <span class="wsm-sign wsm-sign--left">Idea scanner</span>
+      <div>
+        <p class="wsm-machine__eyebrow">Half-baked ideas, fully fun prototypes</p>
+        <h1 id="wsm-title" class="wsm-machine__title">What should we make?</h1>
+      </div>
+      <span class="wsm-sign wsm-sign--right">No boring stuff allowed</span>
+    </div>
+
+    <div class="wsm-factory" aria-live="polite">
+      <div class="wsm-claw" aria-hidden="true">
+        <span></span>
+      </div>
+
+      <div class="wsm-conveyor" data-conveyor></div>
+    </div>
+
+    <div class="wsm-machine__footer">
+      <div class="wsm-ticket" aria-live="polite">
+        <span class="wsm-ticket__label">Your idea:</span>
+        <strong data-ticket>Pull the lever, pick a winner</strong>
+      </div>
+      <button class="wsm-machine__button" type="button" data-generate>Surprise us</button>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      const ideas = [
+        {
+          id: 'taco-cat-drone',
+          name: 'Taco Cat Drone',
+          vibe: 'Snack-powered chaos',
+          build: 'A tiny game where a taco cat drops compliments from the sky.',
+          step: 'Sketch the flying taco cat and pick three ridiculous power-ups.',
+        },
+        {
+          id: 'pocket-weather-wizard',
+          name: 'Pocket Weather Wizard',
+          vibe: 'Useful, but magical',
+          build: 'A weather card that gives outfit advice like a tiny dramatic wizard.',
+          step: 'Make one card for sunny, rainy, windy, and suspiciously foggy.',
+        },
+        {
+          id: 'tiny-chaos-museum',
+          name: 'Tiny Chaos Museum',
+          vibe: 'Curated nonsense',
+          build: 'A gallery of weird internet artifacts with serious museum captions.',
+          step: 'Create three exhibits and give each one a grand curator note.',
+        },
+        {
+          id: 'compliment-cannon',
+          name: 'Compliment Cannon',
+          vibe: 'Instant serotonin',
+          build: 'A button that launches custom compliments like confetti.',
+          step: 'Write ten compliments that feel specific, warm, and a little silly.',
+        },
+        {
+          id: 'mini-mission-machine',
+          name: 'Mini Mission Machine',
+          vibe: 'Adventure dispenser',
+          build: 'A generator that gives you one playful quest for the next ten minutes.',
+          step: 'Invent five quests that can happen at a desk, couch, or sidewalk.',
+        },
+        {
+          id: 'no-boring-generator',
+          name: 'No Boring Generator',
+          vibe: 'Prototype playground',
+          build: 'A page that transforms boring ideas into stranger, shinier versions.',
+          step: 'Add sliders for weirdness, usefulness, speed, and sparkle.',
+        },
+      ];
+
+      const conveyor = document.querySelector('[data-conveyor]');
+      const ticket = document.querySelector('[data-ticket]');
+      const generatorButtons = document.querySelectorAll('[data-generate]');
+      let batchIndex = 0;
+      let selectedId = null;
+
+      function visibleIdeas() {
+        return [0, 1, 2].map(function (offset) {
+          return ideas[(batchIndex + offset) % ideas.length];
+        });
+      }
+
+      function renderIdeas() {
+        conveyor.innerHTML = visibleIdeas().map(function (idea) {
+          const isSelected = selectedId === idea.id;
+
+          return `
+            <article class="wsm-card${isSelected ? ' wsm-card--selected' : ''}">
+              <span class="wsm-card__label">${idea.vibe}</span>
+              <h2 class="wsm-card__title">${idea.name}</h2>
+              <p class="wsm-card__body">${idea.build}</p>
+              <p class="wsm-card__step"><span>First tiny step:</span> ${idea.step}</p>
+              <button
+                class="wsm-card__button"
+                type="button"
+                data-select="${idea.id}"
+                aria-pressed="${isSelected}"
+              >
+                Make this now
+              </button>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function generateIdeas() {
+        batchIndex = (batchIndex + 3) % ideas.length;
+        selectedId = null;
+        ticket.textContent = 'Pull the lever, pick a winner';
+        renderIdeas();
+      }
+
+      generatorButtons.forEach(function (button) {
+        button.addEventListener('click', generateIdeas);
+      });
+
+      conveyor.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-select]');
+
+        if (!button) {
+          return;
+        }
+
+        selectedId = button.getAttribute('data-select');
+        ticket.textContent = ideas.find(function (idea) {
+          return idea.id === selectedId;
+        }).name;
+        renderIdeas();
+      });
+
+      renderIdeas();
+    })();
+  </script>
+</body>
+</html>
